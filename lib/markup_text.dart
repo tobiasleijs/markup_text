@@ -30,11 +30,12 @@ class MarkupText extends StatelessWidget {
     List<TextType> currentTypes = [];
     String? cUrl;
     String? cColor;
+    double? cSize;
 
     addPart() {
       if (current != "") {
-        partList.add(
-            _TextPart(current, url: cUrl, color: cColor)..addAll(currentTypes));
+        partList.add(_TextPart(current, url: cUrl, color: cColor, size: cSize)
+          ..addAll(currentTypes));
         current = "";
       }
     }
@@ -105,6 +106,12 @@ class MarkupText extends StatelessWidget {
               cColor = null;
               pointer += 3;
               break;
+            case "/s":
+              addPart();
+              removeType(TextType.size);
+              cSize = null;
+              pointer += 3;
+              break;
             default:
               if (code.startsWith("a ")) {
                 addPart();
@@ -123,6 +130,13 @@ class MarkupText extends StatelessWidget {
               if (code.startsWith("icon ")) {
                 addPart();
                 addIconPart(code.substring(5), style?.fontSize ?? 14, cColor);
+                pointer += code.length + 1;
+                break;
+              }
+              if (code.startsWith("s ")) {
+                addPart();
+                addType(TextType.size);
+                cSize = double.tryParse(code.substring(2));
                 pointer += code.length + 1;
                 break;
               }
@@ -145,7 +159,7 @@ class MarkupText extends StatelessWidget {
   }
 }
 
-enum TextType { link, bold, italic, underlined, color, icon }
+enum TextType { link, bold, italic, underlined, color, icon, size }
 
 class _TextPart {
   final String text;
@@ -153,9 +167,11 @@ class _TextPart {
   final String? color;
   final String? icon;
   final double? iconSize;
+  final double? size;
   final List<TextType> types = [];
 
-  _TextPart(this.text, {this.url, this.color, this.icon, this.iconSize});
+  _TextPart(this.text,
+      {this.url, this.color, this.icon, this.iconSize, this.size});
 
   add(TextType type) {
     types.add(type);
@@ -171,6 +187,7 @@ class _TextPart {
     List<TextDecoration> decorations = [];
     FontWeight fontWeight = FontWeight.normal;
     FontStyle fontStyle = FontStyle.normal;
+    double? fontSize = size;
     for (TextType type in types) {
       switch (type) {
         case TextType.link:
@@ -218,6 +235,10 @@ class _TextPart {
                   color: cColor),
             );
           }
+          break;
+        case TextType.size:
+          fontSize = size;
+          break;
       }
     }
     return TextSpan(
@@ -227,6 +248,7 @@ class _TextPart {
             fontStyle: fontStyle,
             fontWeight: fontWeight,
             color: cColor,
+            fontSize: fontSize,
             decoration: TextDecoration.combine(decorations)));
   }
 }
